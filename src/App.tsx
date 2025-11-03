@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import downloadImagesAsZip from "./utils/download";
 import { DownloadProgress } from "./components/DownloadProgress";
+import { checkVersion } from "./utils/check-version";
 
 const DOWNLOADED_IMAGES_KEY = "doubao-downloaded-images";
 
@@ -24,6 +25,8 @@ function App() {
   // 从 localStorage 加载已下载的图片记录
   useEffect(() => {
     try {
+      // 检查新版本
+      checkVersion();
       const saved = localStorage.getItem(DOWNLOADED_IMAGES_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);

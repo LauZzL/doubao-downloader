@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import copy from "rollup-plugin-copy";
+import packageJson from './package.json';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -35,4 +36,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+    __BUILD_TIME__: JSON.stringify(new Date().toLocaleString()),
+  }
 });
