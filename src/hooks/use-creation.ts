@@ -34,9 +34,9 @@ export function useCreation(
             }
             return creation;
           });
-          !prevMessgeId.current.has(message_id) &&
+          images.length > 0 &&
+            !prevMessgeId.current.has(message_id) &&
             prevMessgeId.current.add(message_id) &&
-            images.length > 0 &&
             callback(images, conversation_id, message_id);
         });
       }

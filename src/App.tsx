@@ -99,7 +99,6 @@ function App() {
   };
 
   useCreation((urls, conversation_id, message_id) => {
-    console.log("newImages", urls, conversation_id, message_id);
     const newMessages = messages.find((item) => item.message_id === message_id) ?? { urls, message_id, conversation_id };
     if (newMessages) {
       setMessages((prev) => [...prev, newMessages]);

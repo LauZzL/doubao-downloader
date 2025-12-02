@@ -10,7 +10,8 @@ export function extractMessages(obj: object, key: string): any[] {
         !Array.isArray(current) &&
         Object.prototype.hasOwnProperty.call(current, key)
       ) {
-        conversation_id && message_id && results.push({
+        // 生成图片时response中不含有conversation_id
+        message_id && results.push({
           conversation_id,
           message_id,
           creations: current[key],
