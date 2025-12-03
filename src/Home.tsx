@@ -1,15 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ImageSelector } from "./components/ImageSelector";
 import CheckBox from "./components/CheckBox";
 import { db } from "./utils/db";
 import { useLiveQuery } from "dexie-react-hooks";
 
 interface HomeProps {
-  messages: {
-    urls: string[];
-    message_id: string;
-    conversation_id: string;
-  }[];
+  urls: string[];
   downloadedImages: Set<string>;
   isOpen: boolean;
   onClose: () => void;
@@ -20,12 +16,7 @@ interface HomeProps {
 
 export const Home = (props: HomeProps) => {
   const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
-  const [urls, setUrls] = useState<string[]>([]);
   const setting = useLiveQuery(() => db.setting.toArray(), []) || [];
-
-  useEffect(() => {
-    setUrls(props.messages.map((message) => message.urls).flat());
-  }, [props.messages]);
 
   const handleOnSelectChange = useCallback((selected: string[]) => {
     setSelectedUrls(selected);
@@ -40,14 +31,14 @@ export const Home = (props: HomeProps) => {
 
   const downloadAll = async () => {
     if (props.isDownloading) return;
-    await props.onDownload(urls);
+    await props.onDownload(props.urls);
     // 下载完成后清除勾选
     setSelectedUrls([]);
   };
 
   // 勾选所有未下载的图片
   const selectUndownloaded = () => {
-    const undownloaded = urls.filter((url) => !props.downloadedImages.has(url));
+    const undownloaded = props.urls.filter((url) => !props.downloadedImages.has(url));
     setSelectedUrls(undownloaded);
   };
 
@@ -57,7 +48,7 @@ export const Home = (props: HomeProps) => {
   };
 
   // 统计未下载的图片数量
-  const undownloadedCount = urls.filter(
+  const undownloadedCount = props.urls.filter(
     (url) => !props.downloadedImages.has(url)
   ).length;
 
@@ -85,7 +76,7 @@ export const Home = (props: HomeProps) => {
               >
                 {props.isDownloading
                   ? "下载中..."
-                  : `下载所有 (${urls.length})`}
+                  : `下载所有 (${props.urls.length})`}
               </button>
               <button
                 onClick={downloadSelected}
@@ -150,7 +141,7 @@ export const Home = (props: HomeProps) => {
         </div>
         <div className="dd-images-container">
           <ImageSelector
-            images={urls}
+            images={props.urls}
             downloadedImages={props.downloadedImages}
             selectedUrls={selectedUrls}
             onSelectChange={handleOnSelectChange}

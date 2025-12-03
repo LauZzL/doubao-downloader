@@ -24,4 +24,8 @@ export type Message = {
 declare global {
   const __APP_VERSION__: string;
   const __BUILD_TIME__: string;
+  interface Window {
+    origin_parse: (data: string) => any;
+  }
 }
+
