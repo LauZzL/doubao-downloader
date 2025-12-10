@@ -128,13 +128,13 @@ export const Home = (props: HomeProps) => {
         </div>
         <div className="dd-action-btns">  
           <CheckBox id="1" name="1" label="下载时按展示顺序下载" checked={
-            setting.find((item) => item.key === "download_order")?.value === "true"
+            setting.find((item) => item.key === "download_order")?.value as boolean || false
           } onChange={
             (checked) => {
               db.setting.put({
                 id: 1,
                 key: "download_order",
-                value: checked ? "true" : "false",
+                value: checked,
               });
             }
           }></CheckBox>
