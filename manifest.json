@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "豆包下载器",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "豆包AI生图去水印批量下载!",
   "action": {
     "default_popup": "popup.html",
