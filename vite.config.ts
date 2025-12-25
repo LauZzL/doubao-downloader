@@ -18,7 +18,7 @@ export default defineConfig({
         description: "豆包AI生图去水印批量下载!",
         icon: "https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/doubao/chat/static/image/logo-icon-white-bg.72df0b1a.png",
         namespace: "npm/vite-plugin-monkey",
-        match: ["https://www.doubao.com/chat*"],
+        match: ["https://www.doubao.com/*"],
       },
     }),
     copy({
