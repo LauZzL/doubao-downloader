@@ -99,6 +99,17 @@ function App() {
   useJson(({ urls, type }) => {
     if (type === "image") {
       const newImages = urls.filter((url) => !images.includes(url));
+      if (newImages.some((url) => url.includes("watermark"))) {
+        toast.warning("❗️ 警告", {
+          description: "(该问题只在部分用户中出现)已捕获到图片数据，但图片似乎包含水印，你可以点击按钮到Issue中查看。",
+          action: {
+            label: "查看Issue",
+            onClick: () => {
+              window.open("https://github.com/LauZzL/doubao-downloader/issues/7", "_blank");
+            },
+          },
+        });
+      }
       if (newImages.length > 0) {
         setImages((prev) => [...prev, ...newImages]);
         toast("🎉 有新图片", {
