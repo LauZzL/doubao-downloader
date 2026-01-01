@@ -1,4 +1,4 @@
-name: build
+name: release
 
 on:
   workflow_dispatch: # 手动触发工作流
@@ -27,14 +27,13 @@ jobs:
       - name: Build project
         run: pnpm build
 
-      - name: Verify build filese
+      - name: Verify build files
         run: |
           ls -la dist/
           if [ ! -f "dist/doubao-downloader.user.js" ] || [ ! -f "dist/logo.png" ] || [ ! -f "dist/manifest.json" ] || [ ! -f "dist/popup.html" ]; then
             echo "Error: Build files missing!"
             exit 1
           fi
-      
 
       - name: Package dist files to zip
         run: |
@@ -56,3 +55,31 @@ jobs:
           name: doubao-downloader-userscript
           path: dist/doubao-downloader.user.js
           retention-days: 30
+
+      - name: Install jq and extract version from package.json
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          echo "PACKAGE_VERSION=v$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      - name: Create Release Draft with Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+
+          tag_name: ${{ env.PACKAGE_VERSION }}
+          name: "Doubao Downloader - ${{ env.PACKAGE_VERSION }}"
+          body: |
+
+            - 构建触发：${{ github.event_name }}
+            - 构建ID：${{ github.run_id }}
+            - 构建时间：${{ github.run_at }}
+            - 项目版本：${{ env.PACKAGE_VERSION }}
+            - 包含文件：
+              1. doubao-downloader.zip（浏览器扩展完整包）
+              2. doubao-downloader.user.js（用户脚本）
+
+          files: |
+            doubao-downloader.zip
+            dist/doubao-downloader.user.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
