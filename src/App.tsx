@@ -37,19 +37,16 @@ function App() {
   const setting =
     useLiveQuery(() => db.setting.toArray(), []) || ([] as Setting[]);
 
-  const updateSetting = useCallback(
-    (item: Setting) => {
-      db.setting
-        .update(item.id, {
-          key: item.key,
-          value: item.value,
-        })
-        .then((e) => {
-          e ? Toast.success("设置成功") : Toast.error("设置失败");
-        });
-    },
-    [],
-  );
+  const updateSetting = useCallback((item: Setting) => {
+    db.setting
+      .update(item.id, {
+        key: item.key,
+        value: item.value,
+      })
+      .then((e) => {
+        e ? Toast.success("设置成功") : Toast.error("设置失败");
+      });
+  }, []);
 
   useJson({
     showRaw:
