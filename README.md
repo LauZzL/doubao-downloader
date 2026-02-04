@@ -1,5 +1,8 @@
 ![doubao-downloader](https://socialify.git.ci/LauZzL/doubao-downloader/image?custom_language=React&description=1&forks=1&issues=1&language=1&name=1&owner=1&pattern=Plus&pulls=1&stargazers=1&theme=Dark)
 
+> [!WARNING]
+> 该分支处于实验阶段，1.x 版本中的部分功能仍未移植到该分支中，你可以在 TODO Tree 中查看未完成的功能。
+
 ## 项目介绍
 
 **基于 React 开发的豆包 AI 无水印资源批量下载浏览器扩展/油猴脚本。**
@@ -49,17 +52,8 @@
 
 ## 预览
 
-#### 对话实时获取
+![fte807e.png](https://iili.io/fte807e.png)
 
-![KOLmij1.gif](https://iili.io/KOLmij1.gif)
-
-#### 无水印预览
-
-![KOLyuON.png](https://iili.io/KOLyuON.png)
-
-#### 所有图片
-
-![KOLQdZJ.gif](https://iili.io/KOLQdZJ.gif)
 
 ## 开发环境
 
