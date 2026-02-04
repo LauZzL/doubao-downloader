@@ -50,6 +50,10 @@
 
 插件不支持视频下载，但可以使用手机下载。详情见：[Issue #6](https://github.com/LauZzL/doubao-downloader/issues/6)
 
+## 4. 提示下载成功仍处于下载状态？
+
+使用具有 `DISABLE CSP` 功能的扩展程序禁用 CSP，但绝大部分情况你可以刷新页面重试。
+
 ## 预览
 
 ![fte807e.png](https://iili.io/fte807e.png)
