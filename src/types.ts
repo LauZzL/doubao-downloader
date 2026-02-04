@@ -3,7 +3,12 @@ export type Setting = {
   id?: number;
   key: SettingKey;
   value: any;
-}
+};
+
+export type NewVersionData = {
+  body: string;
+  isNew: boolean;
+};
 
 export type Creation = {
   image: {
@@ -29,20 +34,20 @@ export type ConvMessage = {
   // 创建时间
   create_time: number;
   creation?: Creation;
-}
+};
 
-export type DownloadImage = { 
+export type DownloadImage = {
   conversation_id: string;
   message_id: string;
   key: string;
   url: string;
-}
+};
 
-export type ConvFilter = { 
+export type ConvFilter = {
   showConvId: string;
   currentPage: number;
   pageSize: number;
-}
+};
 
 declare global {
   const __APP_VERSION__: string;
@@ -64,4 +69,4 @@ interface FileLike {
 export type ZipWriter = {
   enqueue: (fileLike: FileLike) => void;
   close: () => void;
-}
+};
