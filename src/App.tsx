@@ -1,159 +1,198 @@
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Indicator } from "./components/Indicator";
-import { Home } from ".//Home";
+import MainPanel from "./components/MainPanel/MainPanel";
 import { useJson } from "./hooks/use-json";
-import { Toaster } from "@/components/ui/sonner";
-import { toast } from "sonner";
-import downloadImagesAsZip from "./utils/download";
-import { DownloadProgress } from "./components/DownloadProgress";
-import { checkVersion } from "./utils/check-version";
-import { db } from "./utils/db";
+import { ConvFilter, ConvMessage, Creation, Setting } from "./types";
+import { ConvContext } from "./context/ConvContext";
+import { ConvFilterContext } from "./context/ConvFilterContext";
+import { useDownload } from "./hooks/use-download";
+import { Notification, Toast, Typography } from "@douyinfe/semi-ui-19";
+import ProgressModal from "./components/ProgressModal";
+import { db, SettingService } from "./db";
+import SettingModal from "./components/SettingModal";
+import { SettingContext } from "./context/SettingContext";
 import { useLiveQuery } from "dexie-react-hooks";
 
 function App() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState({
-    current: 0,
-    total: 0,
+  const [isOpenMainPanel, setIsOpenMainPanel] = useState(false);
+  const [isOpenSetting, setIsOpenSetting] = useState(false);
+  const [convMessageList, setConvMessageList] = useState<ConvMessage[]>([]);
+  const [selectKeys, setSelectKeys] = useState<string[]>([]);
+  const [convFilter, setConvFilter] = useState<ConvFilter>({
+    showConvId: "-1",
+    currentPage: 1,
+    pageSize: 12,
   });
-
-  // 获取已下载的图片记录
-  const downloadedRaw = useLiveQuery(() => db.downloaded.toArray(), []) || [];
-  const downloaded = useMemo(
-    () => new Set(downloadedRaw.map((item) => item.url)),
-    [downloadedRaw]
-  );
 
   useEffect(() => {
-    try {
-      // 检查新版本
-      checkVersion();
-    } catch (error) {
-      console.error("检查新版本异常:", error);
-    }
+    Notification.config({
+      position: "bottomRight",
+    });
+    const settingService = new SettingService();
+    settingService.initDB();
   }, []);
 
-  // 保存已下载的图片记录
-  const saveDownloadedImages = (urls: string[]) => {
-    db.downloaded.bulkAdd(urls.map((url) => ({ url }))).catch((error) => {
-      console.error("保存已下载图片记录失败:", error);
-      toast.error("保存已下载图片记录失败", {
-        description: error instanceof Error ? error.message : "未知错误",
-      });
-    });
-  };
+  const { download, progress, isDownloading } = useDownload();
 
-  // 重置已下载的图片记录
-  const resetDownloadedImages = () => {
-    db.downloaded.clear().catch((error) => {
-      console.error("重置已下载图片记录失败:", error);
-      toast.error("重置已下载图片记录失败", {
-        description: error instanceof Error ? error.message : "未知错误",
-      });
-    });
-  };
+  const setting =
+    useLiveQuery(() => db.setting.toArray(), []) || ([] as Setting[]);
 
-  const download = async (urls: string[]) => {
-    if (isDownloading) {
-      toast.warning("正在下载中", {
-        description: "请等待当前下载完成",
-      });
-      return;
-    }
-
-    setIsDownloading(true);
-    setDownloadProgress({ current: 0, total: urls.length });
-
-    try {
-      await downloadImagesAsZip(urls, {
-        zipName: document.title,
-        onProgress: (current, total) => {
-          setDownloadProgress({ current, total });
-        },
-        onError: (url, error) => {
-          console.error(`下载图片${url}失败:`, error);
-          toast.error("下载失败", {
-            description: `图片下载失败: ${error.message}`,
-          });
-        },
-      });
-
-      // 下载成功后记录这些图片
-      saveDownloadedImages(urls);
-
-      toast.success("下载完成", {
-        description: `成功下载 ${urls.length} 张图片`,
-      });
-    } catch (error) {
-      console.error("下载失败:", error);
-      toast.error("下载失败", {
-        description: error instanceof Error ? error.message : "未知错误",
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  useJson(({ urls, type }) => {
-    if (type === "image") {
-      const newImages = urls.filter((url) => !images.includes(url));
-      if (newImages.some((url) => url.includes("watermark"))) {
-        toast.warning("❗️ 警告", {
-          description: "(该问题只在部分用户中出现)已捕获到图片数据，但图片似乎包含水印，你可以点击按钮到Issue中查看。",
-          action: {
-            label: "查看Issue",
-            onClick: () => {
-              window.open("https://github.com/LauZzL/doubao-downloader/issues/7", "_blank");
-            },
-          },
+  const updateSetting = useCallback(
+    (item: Setting) => {
+      db.setting
+        .update(item.id, {
+          key: item.key,
+          value: item.value,
+        })
+        .then((e) => {
+          e ? Toast.success("设置成功") : Toast.error("设置失败");
         });
-      }
-      if (newImages.length > 0) {
-        setImages((prev) => [...prev, ...newImages]);
-        toast("🎉 有新图片", {
-          description: `获取到${newImages.length}张图片`,
-          action: {
-            label: "一键下载",
-            onClick: () => {
-              download(newImages);
-            },
-          },
+    },
+    [],
+  );
+
+  useJson({
+    showRaw:
+      setting.find((item: Setting) => item.key === "show_raw")?.value || true,
+    callback: (convMessages: ConvMessage[]) => {
+      const newConv = convMessages.filter(
+        (message) =>
+          !convMessageList.some(
+            (prev) => prev.message_id === message.message_id,
+          ),
+      );
+      newConv.length > 0 &&
+        Notification.info({
+          title: "豆包下载器",
+          content: (
+            <>
+              <div>
+                捕获到{newConv.length}张图片，
+                <Typography.Text link onClick={() => handleDownload(newConv)}>
+                  点击此处下载图片
+                </Typography.Text>
+                。<br />
+                你也可以点击屏幕右侧豆包头像打开面板查看！
+              </div>
+            </>
+          ),
+          position: "bottomRight",
         });
-      }
-    }
-    if (type === "video") {
-      toast("🎉 获取到视频", {
-        description: `是否在新窗口打开视频？`,
-        action: {
-          label: "打开视频",
-          onClick: () => {
-            window.open(urls[0], "_blank");
-          },
-        },
-      });
-    }
+      setConvMessageList((prev) => [...prev, ...newConv]);
+    },
   });
 
+  const changeFilter = useCallback(
+    (key: keyof ConvFilter, value: string) => {
+      setConvFilter((prev) => ({ ...prev, [key]: value }));
+    },
+    [convFilter],
+  );
+
+  const handleDownload = useCallback(
+    (convMessages: ConvMessage[]) => {
+      if (isDownloading) {
+        Toast.warning("正在下载中，请勿重复下载");
+        return;
+      }
+      if (convMessages.length === 0) {
+        Toast.warning("请选择要下载的图片");
+        return;
+      }
+      const downloadImages = convMessages
+        .filter(
+          (conv): conv is ConvMessage & { creation: Creation } =>
+            conv.creation != null,
+        )
+        .flatMap((conv) => {
+          return {
+            conversation_id: conv.conversation_id,
+            message_id: conv.message_id,
+            key: conv.creation.image.key,
+            url: conv.creation.image.image_ori_raw.url,
+          };
+        });
+      download(downloadImages, {
+        onProgress(current, total) {
+          if (total > 0 && current === total) {
+            Toast.success("下载完成");
+          }
+        },
+      });
+    },
+    [download, isDownloading],
+  );
+
+  const handleDownloadAll = useCallback(() => {
+    const selectConv = convFilter.showConvId;
+    const downloadConv = convMessageList.filter(
+      (conv) =>
+        conv.creation &&
+        (selectConv === "-1" || conv.conversation_id === selectConv),
+    );
+    handleDownload(downloadConv);
+  }, [convMessageList, convFilter, handleDownload]);
+
+  const handleDownloadSelected = useCallback(() => {
+    handleDownload(
+      selectKeys.map(
+        (key) =>
+          convMessageList.find((conv) => conv.creation?.image.key === key)!,
+      ),
+    );
+  }, [convMessageList, handleDownload, selectKeys]);
+
+  const handleSelect = useCallback(
+    (key: string, checked: boolean) => {
+      setSelectKeys((prev) => {
+        return checked
+          ? prev.includes(key)
+            ? prev
+            : [...prev, key]
+          : prev.filter((item) => item !== key);
+      });
+    },
+    [selectKeys],
+  );
+
   return (
-    <div>
-      <Indicator onClick={() => setIsOpen(!isOpen)} />
-      <Home
-        urls={images}
-        downloadedImages={downloaded}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onDownload={download}
-        isDownloading={isDownloading}
-        onResetDownloaded={resetDownloadedImages}
-      ></Home>
-      <Toaster />
-      {isDownloading && (
-        <DownloadProgress
-          text={`正在下载... ${downloadProgress.current}/${downloadProgress.total}`}
+    <div
+      id="doubao-downloader"
+      className="dd:bg-background dd:text-foreground dd:h-0"
+    >
+      <Indicator onClick={() => setIsOpenMainPanel(!isOpenMainPanel)} />
+      <ProgressModal isDownloading={isDownloading} progress={progress} />
+      <SettingContext.Provider
+        value={{
+          setting,
+          updateSetting,
+        }}
+      >
+        <SettingModal
+          isOpenSetting={isOpenSetting}
+          onCloseSetting={() => setIsOpenSetting(false)}
         />
-      )}
+      </SettingContext.Provider>
+      <ConvContext.Provider
+        value={{
+          convMessage: convMessageList,
+          selectKeys,
+          handleSelect,
+          handleDownload,
+          handleDownloadAll,
+          handleDownloadSelected,
+        }}
+      >
+        <ConvFilterContext.Provider value={convFilter}>
+          <MainPanel
+            changeConvFilter={changeFilter}
+            isOpenMainPanel={isOpenMainPanel}
+            onCloseMainPanel={() => setIsOpenMainPanel(false)}
+            isOpenSetting={isOpenSetting}
+            openSetting={() => setIsOpenSetting(true)}
+          />
+        </ConvFilterContext.Provider>
+      </ConvContext.Provider>
     </div>
   );
 }
