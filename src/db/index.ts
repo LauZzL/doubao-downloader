@@ -13,19 +13,26 @@ db.version(1).stores({
 
 export const SETTING_DEFAULTS: Setting[] = [
   {
-    key: "showRaw",
+    key: "show_raw",
     value: true,
+    label: "对话列表显示无水印原图",
+  },
+  {
+    key: "skip_downloaded",
+    value: true,
+    label: "跳过已下载的图片",
   },
 ];
 
 export class SettingService {
   async initDB() {
-    for (const { key, value } of SETTING_DEFAULTS) {
+    for (const { key, value, label } of SETTING_DEFAULTS) {
       const setting = await db.setting.where("key").equals(key).first();
       if (!setting) {
         await db.setting.add({
           key,
           value,
+          label
         });
       }
     }

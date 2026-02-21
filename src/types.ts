@@ -1,8 +1,9 @@
-export type SettingKey = "show_raw";
+export type SettingKey = "show_raw" | "skip_downloaded";
 export type Setting = {
   id?: number;
   key: SettingKey;
   value: any;
+  label?: string;
 };
 
 export type NewVersionData = {

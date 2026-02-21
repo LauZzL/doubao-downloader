@@ -18,6 +18,8 @@ interface ImageCardProps {
   conv: ConvMessage;
 }
 
+// TODO 已下载图片显示已下载标识
+
 function ImageCard({ className, conv }: ImageCardProps) {
   const wh = useIsMobile() ? 120 : 133;
   const { handleDownload, handleSelect, selectKeys } = useContext(ConvContext);
