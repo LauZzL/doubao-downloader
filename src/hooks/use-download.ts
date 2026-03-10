@@ -6,6 +6,7 @@ import "../lib/zip-stream.js";
 import type { DownloadImage, ZipWriter } from "@/types";
 
 interface DownloadOptions {
+  concurrency?: number;
   onProgress?: (current: number, total: number) => void;
   onError?: (url: string, error: Error) => void;
   onSave?: () => void;
@@ -32,9 +33,7 @@ export function useDownload() {
   }, []);
 
   const getImageResponse = useCallback(
-    async (
-      url: string,
-    ): Promise<Response> => {
+    async (url: string): Promise<Response> => {
       try {
         const response = await fetch(url, {
           method: "GET",
@@ -64,6 +63,7 @@ export function useDownload() {
     async (
       downloadImageList: DownloadImage[],
       zipName: string,
+      concurrency: number = 5,
       onProgress: (current: number, total: number) => void,
       onError: (url: string, error: Error) => void,
       signal?: AbortSignal,
@@ -76,7 +76,6 @@ export function useDownload() {
 
       const zipReadableStream = window.ZIP({
         async start(zipWriter: ZipWriter) {
-          const concurrency = 5;
           const limit = pLimit(concurrency);
 
           const downloadPromises = downloadImageList.map((downloadImage) =>
@@ -153,15 +152,16 @@ export function useDownload() {
       downloadImageList: DownloadImage[],
       options: DownloadOptions = {},
     ): Promise<void> => {
-      const {
-        onProgress = () => {},
-        onError = () => {},
-      } = options;
+      const { onProgress = () => {}, onError = () => {} } = options;
 
       // 重置状态
       setError(null);
       setIsDownloading(true);
-      setProgress({ current: 0, total: downloadImageList.length, percentage: 0 });
+      setProgress({
+        current: 0,
+        total: downloadImageList.length,
+        percentage: 0,
+      });
 
       if (!downloadImageList.length) {
         setError(new Error("没有需要下载的图片"));
@@ -199,6 +199,7 @@ export function useDownload() {
           await createZipStream(
             downloadImageList,
             "zipName",
+            options.concurrency || 5,
             handleProgress,
             onError,
           );

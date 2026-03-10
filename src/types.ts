@@ -1,4 +1,4 @@
-export type SettingKey = "show_raw" | "skip_downloaded";
+export type SettingKey = "show_raw" | "skip_downloaded" | "download_concurrency" ;
 export type Setting = {
   id?: number;
   key: SettingKey;

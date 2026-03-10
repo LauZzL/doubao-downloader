@@ -22,6 +22,11 @@ export const SETTING_DEFAULTS: Setting[] = [
     value: true,
     label: "跳过已下载的图片",
   },
+  {
+    key: "download_concurrency",
+    value: 5,
+    label: "下载图片并发数",
+  },
 ];
 
 export class SettingService {

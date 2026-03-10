@@ -1,4 +1,4 @@
-import { Modal, Switch, Toast } from "@douyinfe/semi-ui-19";
+import { Modal, Switch, Toast, InputNumber } from "@douyinfe/semi-ui-19";
 import { useContext } from "react";
 import { SettingContext } from "@/context/SettingContext";
 import { Setting } from "@/types";
@@ -12,6 +12,9 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
   const { setting, updateSetting } = useContext(SettingContext);
   const showRaw = setting.find((item) => item.key === "show_raw");
   const skipDownloaded = setting.find((item) => item.key === "skip_downloaded");
+  const downloadConcurrency = setting.find(
+    (item) => item.key === "download_concurrency",
+  );
 
   const changeSetting = (item: Setting | undefined, value: any) => {
     if (!item) {
@@ -36,22 +39,22 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
     >
       <div className="dd:flex dd:flex-col dd:items-start dd:gap-2 dd:pb-5!">
         <div className="dd:flex dd:flex-row dd:items-center dd:gap-2">
+          <label className="dd:text-sm">{showRaw?.label}</label>
           <Switch
             checked={showRaw?.value}
             onChange={(checked) => {
               changeSetting(showRaw, checked);
             }}
           />
-          <label className="dd:text-sm">{showRaw?.label}</label>
         </div>
         <div className="dd:flex dd:flex-row dd:items-center dd:gap-2">
+          <label className="dd:text-sm">{skipDownloaded?.label}</label>
           <Switch
             checked={skipDownloaded?.value}
             onChange={(checked) => {
               changeSetting(skipDownloaded, checked);
             }}
           />
-          <label className="dd:text-sm">{skipDownloaded?.label}</label>
         </div>
         {/* 
           TODO 自定义下载文件名 string
@@ -67,10 +70,17 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
           zipWriter.enqueue( {directory: true} )
         */}
 
-        {/* 
-          TODO 下载并发数 number
-          默认为 5
-        */}
+        <div className="dd:flex dd:flex-row dd:items-center dd:gap-2">
+          <label className="dd:text-sm">{downloadConcurrency?.label}</label>
+          <InputNumber
+            min={0}
+            max={Number.MAX_SAFE_INTEGER}
+            value={downloadConcurrency?.value}
+            onEnterPress={(e) => {
+              changeSetting(downloadConcurrency, e.currentTarget.value);
+            }}
+          />
+        </div>
       </div>
     </Modal>
   );
