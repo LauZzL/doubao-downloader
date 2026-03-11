@@ -122,7 +122,7 @@ function App() {
         });
       if (downloadImages.length === 0) {
         Toast.warning(
-          `没有可下载的图片，跳过已下载的图片数量：${downloadedUrl.size}`,
+          `没有可下载的图片，跳过已下载的图片数量：${convMessages.length - downloadImages.length}`,
         );
         return;
       }
