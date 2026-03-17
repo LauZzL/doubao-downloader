@@ -84,7 +84,7 @@ export function useDownload() {
               if (signal?.aborted) {
                 throw new Error("下载已取消");
               }
-              const { url } = downloadImage;
+              const { url, folder } = downloadImage;
 
               try {
                 const res = await getImageResponse(url);
@@ -96,7 +96,7 @@ export function useDownload() {
                 let fileName = downloadImage.filename || getFileNameFromUrl(url);
 
                 zipWriter.enqueue({
-                  name: fileName,
+                  name: folder + fileName,
                   lastModified: Date.now(),
                   directory: false,
                   stream: stream,

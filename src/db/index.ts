@@ -32,6 +32,11 @@ export const SETTING_DEFAULTS: Setting[] = [
     value: '${conversation_id}_${message_id}_${index_in_conv}_${creation.image.key}',
     label: "自定义图片文件名",
   },
+  {
+    key: "create_folder",
+    value: false,
+    label: "为会话创建文件夹",
+  },
 ];
 
 export class SettingService {

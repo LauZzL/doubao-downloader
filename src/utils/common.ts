@@ -9,3 +9,10 @@ export const replaceTemplate = (template: string, data: any) => {
     return value;
   });
 };
+
+export const completeSuffix = (filename: string, suffix: string) => {
+  if (!filename.endsWith(suffix)) {
+    return `${filename}.${suffix}`;
+  }
+  return filename;
+};

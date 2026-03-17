@@ -1,4 +1,4 @@
-export type SettingKey = "show_raw" | "skip_downloaded" | "download_concurrency" | "custom_filename_template";
+export type SettingKey = "show_raw" | "skip_downloaded" | "download_concurrency" | "custom_filename_template" | "create_folder";
 export type Setting = {
   id?: number;
   key: SettingKey;
@@ -43,6 +43,7 @@ export type DownloadImage = {
   key: string;
   url: string;
   filename: string;
+  folder?: string;
 };
 
 export type ConvFilter = {

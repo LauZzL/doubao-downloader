@@ -18,6 +18,7 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
   const customFilenameTemplate = setting.find(
     (item) => item.key === "custom_filename_template",
   );
+  const createFolder = setting.find((item) => item.key === "create_folder");
 
   const changeSetting = (item: Setting | undefined, value: any) => {
     if (!item) {
@@ -71,12 +72,15 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
           />
         </div>
 
-        {/* 
-          TODO 下载时为每个会话创建文件夹 true|false
-          默认为false
-          当为true时，以conversation_id为文件夹分类，文件夹名称为index_in_conv===1的tts_content
-          zipWriter.enqueue( {directory: true} )
-        */}
+        <div className="dd:flex dd:flex-row dd:items-center dd:gap-2">
+          <label className="dd:text-sm">{createFolder?.label}</label>
+          <Switch
+            checked={createFolder?.value}
+            onChange={(checked) => {
+              changeSetting(createFolder, checked);
+            }}
+          />
+        </div>
 
         <div className="dd:flex dd:flex-row dd:items-center dd:gap-2">
           <label className="dd:text-sm">{downloadConcurrency?.label}</label>

@@ -12,7 +12,7 @@ import { db, SettingService } from "./db";
 import SettingModal from "./components/SettingModal";
 import { SettingContext } from "./context/SettingContext";
 import { useLiveQuery } from "dexie-react-hooks";
-import { replaceTemplate } from "./utils/common";
+import { completeSuffix, replaceTemplate } from "./utils/common";
 
 function App() {
   const [isOpenMainPanel, setIsOpenMainPanel] = useState(false);
@@ -102,6 +102,8 @@ function App() {
       const customFilenameTemplate =
         setting.find((item) => item.key === "custom_filename_template")
           ?.value || '${conversation_id}_${message_id}_${index_in_conv}_${creation.image.key}';
+      const createFolder =
+        setting.find((item) => item.key === "create_folder")?.value || false;
       const downloadImages = convMessages
         .filter(
           (conv): conv is ConvMessage & { creation: Creation } =>
@@ -115,9 +117,10 @@ function App() {
           return {
             conversation_id: conv.conversation_id,
             message_id: conv.message_id,
-            key: conv.creation.image.key,
+            key: conv.creation.image.key.replace(/\//g, '_'),
             url: conv.creation.image.image_ori_raw.url,
-            filename: replaceTemplate(customFilenameTemplate, conv),
+            filename: completeSuffix(replaceTemplate(customFilenameTemplate, conv), 'png').replace(/\//g, '_'),
+            folder: createFolder ? conv.tts_content + "/" : "",
           };
         });
       if (downloadImages.length === 0) {
@@ -140,7 +143,7 @@ function App() {
         },
       });
     },
-    [download, isDownloading],
+    [download, isDownloading, setting],
   );
 
   const handleDownloadAll = useCallback(() => {
