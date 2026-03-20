@@ -51,7 +51,7 @@ function App() {
 
   useJson({
     showRaw:
-      setting.find((item: Setting) => item.key === "show_raw")?.value || true,
+      setting.find((item: Setting) => item.key === "show_raw")?.value || false,
     callback: (convMessages: ConvMessage[]) => {
       const newConv = convMessages.filter(
         (message) =>

@@ -29,18 +29,22 @@ function findAllKeysInJson(obj: object, key: string): any[] {
 function showRawImage(image: any) {
   if (!image) return;
   const rawImage = image.image_ori_raw?.url;
-  if (rawImage) {
+  if (rawImage || rawImage.includes("watermark")) {
     if (image.image_ori) image.image_ori.url = rawImage;
     if (image.image_preview) image.image_preview.url = rawImage;
     if (image.image_thumb) image.image_thumb.url = rawImage;
   }
 }
 
-function extractCreations(
-  creationsArray: unknown[],
-  baseInfo: Partial<ConvMessage>,
-  showRaw: boolean,
-): ConvMessage[] {
+function extractCreations({
+  creationsArray,
+  baseInfo,
+  showRaw,
+}: {
+  creationsArray: unknown[];
+  baseInfo?: Partial<ConvMessage>;
+  showRaw: boolean;
+}): ConvMessage[] {
   const result: ConvMessage[] = [];
 
   creationsArray.forEach((creations: any) => {
@@ -52,7 +56,7 @@ function extractCreations(
       // 原地替换 url
       showRaw && showRawImage(image);
 
-      if (image?.image_ori_raw?.url) {
+      if (image?.image_ori_raw?.url && baseInfo) {
         result.push({
           ...baseInfo,
           creation: {
@@ -85,19 +89,18 @@ export function useJson({ showRaw = true, callback }: UseJsonProps) {
         const message_id = jsonData.message_id;
         let creations = findAllKeysInJson(jsonData, "creations");
         if (creations.length > 0) {
-          const extracted = extractCreations(
-            creations,
-            {
-              message_id,
-            },
+          const extracted = extractCreations({
+            creationsArray: creations,
+            baseInfo: { message_id },
             showRaw,
-          );
+          });
           newConv.push(...extracted);
         }
       } else {
         messageList.map((messages) =>
           messages.map((message: any) => {
             // 消息ID
+            let creationList = findAllKeysInJson(message, "creations");
             const message_id = message.message_id;
             if (!prevMessageIds.current.has(message_id)) {
               prevMessageIds.current.add(message_id);
@@ -110,17 +113,22 @@ export function useJson({ showRaw = true, callback }: UseJsonProps) {
                 message_id,
                 create_time: message.create_time * 1000,
               };
-              let creationList = findAllKeysInJson(message, "creations");
               if (creationList.length > 0) {
-                const extracted = extractCreations(
-                  creationList,
+                const extracted = extractCreations({
+                  creationsArray: creationList,
                   baseInfo,
                   showRaw,
-                );
+                });
                 newConv.push(...extracted);
               } else {
                 newConv.push(baseInfo as ConvMessage);
               }
+            } else {
+              // 显示原图
+              extractCreations({
+                creationsArray: creationList,
+                showRaw,
+              });
             }
           }),
         );
@@ -131,5 +139,5 @@ export function useJson({ showRaw = true, callback }: UseJsonProps) {
     return () => {
       JSON.parse = window.origin_parse;
     };
-  }, []);
+  }, [showRaw]);
 }
