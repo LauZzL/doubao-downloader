@@ -1,7 +1,9 @@
 import { Modal, Switch, Toast, InputNumber, Input } from "@douyinfe/semi-ui-19";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { SettingContext } from "@/context/SettingContext";
-import { Setting } from "@/types";
+import { Setting, SettingKey } from "@/types";
+import { SETTING_DEFAULTS } from "@/db";
+import useSetting from "@/hooks/use-setting";
 
 interface SettingModalProps {
   isOpenSetting: boolean;
@@ -10,32 +12,46 @@ interface SettingModalProps {
 
 function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
   const { setting, updateSetting } = useContext(SettingContext);
-  const showRaw = setting.find((item) => item.key === "show_raw");
-  const skipDownloaded = setting.find((item) => item.key === "skip_downloaded");
-  const downloadConcurrency = setting.find(
-    (item) => item.key === "download_concurrency",
-  );
-  const customFilenameTemplate = setting.find(
-    (item) => item.key === "custom_filename_template",
-  );
-  const createFolder = setting.find((item) => item.key === "create_folder");
 
-  const changeSetting = (item: Setting | undefined, value: any) => {
+  const getSetting = (key: SettingKey): Setting => {
+    const found = setting.find(item => item.key === key);
+    if (found) return found;
+    const defaultItem = SETTING_DEFAULTS.find(item => item.key === key);
+    if (defaultItem) return defaultItem as Setting;
+    return { key, label: key, value: null } as Setting;
+  };
+
+  const changeSetting = useCallback((item: Setting, value: any) => {
     if (!item) {
       Toast.error("无法获取到设置项");
       return;
     }
-    updateSetting({
-      ...item,
-      value,
-    });
+    updateSetting({ ...item, value });
+  }, [updateSetting]);
+
+
+  const showRaw = getSetting("show_raw");
+  const skipDownloaded = getSetting("skip_downloaded");
+  const downloadConcurrency = getSetting("download_concurrency");
+  const customFilenameTemplate = getSetting("custom_filename_template");
+  const createFolder = getSetting("create_folder");
+
+  const customFilenameTemplateLocal = useSetting(customFilenameTemplate, changeSetting);
+  const downloadConcurrencyLocal = useSetting(downloadConcurrency, changeSetting);
+
+
+  const handleClose = () => {
+    customFilenameTemplateLocal.flush();
+    downloadConcurrencyLocal.flush();
+    onCloseSetting();
   };
+
 
   return (
     <Modal
       title="设置"
       visible={isOpenSetting}
-      onCancel={onCloseSetting}
+      onCancel={handleClose}
       footer={null}
       getPopupContainer={() =>
         document.getElementById("dd-modal-popup-container") || document.body
@@ -75,10 +91,8 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
           <label className="dd:text-sm">{customFilenameTemplate?.label}</label>
           <Input
             placeholder="请输入自定义文件名模板，为空则使用默认模板"
-            value={customFilenameTemplate?.value}
-            onChange={(value) => {
-              changeSetting(customFilenameTemplate, value);
-            }}
+            value={customFilenameTemplateLocal.value}
+            onChange={customFilenameTemplateLocal.onChange}
           />
         </div>
 
@@ -87,10 +101,8 @@ function SettingModal({ isOpenSetting, onCloseSetting }: SettingModalProps) {
           <InputNumber
             min={0}
             max={Number.MAX_SAFE_INTEGER}
-            value={downloadConcurrency?.value}
-            onChange={(value) => {
-              changeSetting(downloadConcurrency, value);
-            }}
+            value={downloadConcurrencyLocal.value as number}
+            onChange={downloadConcurrencyLocal.onChange}
           />
         </div>
       </div>
