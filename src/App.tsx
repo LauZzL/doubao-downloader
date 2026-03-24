@@ -45,7 +45,7 @@ function App() {
         value: item.value,
       })
       .then((e) => {
-        e ? Toast.success("设置成功") : Toast.error("设置失败");
+        !e && Toast.error("设置失败");
       });
   }, []);
 
