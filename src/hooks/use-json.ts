@@ -6,6 +6,8 @@ interface UseJsonProps {
   callback: (messages: ConvMessage[]) => void;
 }
 
+const GET_VIDEO_INFO_URL = `https://www.doubao.com/samantha/media/get_play_info?version_code=20800&language=zh&device_platform=web&aid=497858&real_aid=497858&pkg_type=release_version&device_id=7622868208475047462&pc_version=3.20.2&web_id=&tea_uuid=&region=CN&sys_region=CN&samantha_web=1&web_platform=browser&use-olympus-account=1&web_tab_id=`;
+
 function findAllKeysInJson(obj: object, key: string): any[] {
   const results: any[] = [];
   function search(current: any) {
@@ -49,7 +51,43 @@ function extractCreations({
 
   creationsArray.forEach((creations: any) => {
     if (!Array.isArray(creations)) return;
-    creations.forEach((creation: any) => {
+    creations.forEach(async (creation: any) => {
+      const isVideoCreation = creation.video && creation.video.vid && true;
+      if (isVideoCreation) {
+        result.push({
+          ...baseInfo,
+          creation: {
+            creation_type: "video",
+            vid: creation.video.vid,
+            //image.image_ori_raw.url
+            image: {
+              key: creation.video.cover.key,
+              image_ori_raw: {
+                url: creation.video.cover.image_thumb.url,
+              },
+              gen_params: creation.video.gen_params?.prompt || "",
+            },
+          },
+        } as ConvMessage);
+
+        // TODO 直接返回vid和封面，在面板点击下载或播放时再请求接口获取视频地址，下载时通过vid获取视频地址
+        // const response = await fetch(GET_VIDEO_INFO_URL, {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   body: JSON.stringify({
+        //     key: creation.video.vid,
+        //   }),
+        // });
+        // const data = await response.json();
+        // if (data && data.code === 0 && baseInfo) {
+        //   const original_media_info = data.data.original_media_info;
+        //   if (original_media_info) {
+        //     const video_url = original_media_info.main_url;
+        //   }
+        // }
+      }
       const image = creation?.image;
       if (!image) return;
 
@@ -60,6 +98,7 @@ function extractCreations({
         result.push({
           ...baseInfo,
           creation: {
+            creation_type: "image",
             image: {
               key: image.key,
               image_ori_raw: image.image_ori_raw,
@@ -74,7 +113,7 @@ function extractCreations({
   return result;
 }
 
-function extractTtsContentText (tts_content: string) {
+function extractTtsContentText(tts_content: string) {
   try {
     const json = JSON.parse(tts_content);
     if (json.text) {
@@ -83,7 +122,7 @@ function extractTtsContentText (tts_content: string) {
   } catch (error) {
     return tts_content;
   }
-};
+}
 
 export function useJson({ showRaw = true, callback }: UseJsonProps) {
   const prevMessageIds = useRef<Set<string>>(new Set());

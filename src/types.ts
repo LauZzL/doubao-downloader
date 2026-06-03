@@ -11,7 +11,9 @@ export type NewVersionData = {
   isNew: boolean;
 };
 
+
 export type Creation = {
+  creation_type: "image" | "video";
   image: {
     image_ori_raw: {
       url: string;
@@ -19,6 +21,7 @@ export type Creation = {
     key: string;
     gen_params: string;
   };
+  vid?: string;
 };
 
 export type ConvMessage = {
@@ -34,7 +37,7 @@ export type ConvMessage = {
   message_id: string;
   // 创建时间
   create_time: number;
-  creation?: Creation;
+  creation: Creation;
 };
 
 export type DownloadImage = {
