@@ -6,7 +6,8 @@ interface UseJsonProps {
   callback: (messages: ConvMessage[]) => void;
 }
 
-const GET_VIDEO_INFO_URL = `https://www.doubao.com/samantha/media/get_play_info?version_code=20800&language=zh&device_platform=web&aid=497858&real_aid=497858&pkg_type=release_version&device_id=7622868208475047462&pc_version=3.20.2&web_id=&tea_uuid=&region=CN&sys_region=CN&samantha_web=1&web_platform=browser&use-olympus-account=1&web_tab_id=`;
+// TODO 将视频提取逻辑抽离为一个工具方法，以供点击播放按钮或下载时使用
+//const GET_VIDEO_INFO_URL = `https://www.doubao.com/samantha/media/get_play_info?version_code=20800&language=zh&device_platform=web&aid=497858&real_aid=497858&pkg_type=release_version&device_id=7622868208475047462&pc_version=3.20.2&web_id=&tea_uuid=&region=CN&sys_region=CN&samantha_web=1&web_platform=browser&use-olympus-account=1&web_tab_id=`;
 
 function findAllKeysInJson(obj: object, key: string): any[] {
   const results: any[] = [];
