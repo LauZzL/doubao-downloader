@@ -106,7 +106,7 @@ function App() {
         return;
       }
       if (convMessages.length === 0) {
-        Toast.warning("请选择要下载的图片");
+        Toast.warning("请选择要下载的内容");
         return;
       }
       const downloadedArray =
@@ -120,32 +120,77 @@ function App() {
         "${conversation_id}_${message_id}_${index_in_conv}_${creation.image.key}";
       const createFolder =
         setting.find((item) => item.key === "create_folder")?.value || false;
-      const downloadImages = convMessages
-        .filter(
-          (conv): conv is ConvMessage & { creation: Creation } =>
-            conv.creation != null,
-        )
-        // 过滤已下载的图片
+
+      const validConvs = convMessages.filter(
+        (conv): conv is ConvMessage & { creation: Creation } =>
+          conv.creation != null,
+      );
+
+      const imageConvs = validConvs.filter(
+        (conv) => conv.creation.creation_type === "image",
+      );
+      const videoConvs = validConvs.filter(
+        (conv) => conv.creation.creation_type === "video",
+      );
+
+      // 解析视频真实下载地址
+      const videoResults = await Promise.allSettled(
+        videoConvs.map(async (conv) => {
+          const videoUrl = await getVideoUrl(conv.creation.vid!);
+          return { conv, videoUrl };
+        }),
+      );
+
+      // 构建图片下载列表
+      const imageDownloads = imageConvs
         .filter(
           (conv) => !downloadedUrl.has(conv.creation.image.image_ori_raw.url),
         )
-        .flatMap((conv) => {
-          return {
-            conversation_id: conv.conversation_id,
-            message_id: conv.message_id,
-            key: conv.creation.image.key.replace(/\//g, "_"),
-            url: conv.creation.image.image_ori_raw.url,
-            filename: completeSuffix(
-              replaceTemplate(customFilenameTemplate, conv),
-              "png",
-            ).replace(/\//g, "_"),
-            folder: createFolder ? conv.tts_content + "/" : "",
-          };
-        });
+        .map((conv) => ({
+          conversation_id: conv.conversation_id,
+          message_id: conv.message_id,
+          key: conv.creation.image.key.replace(/\//g, "_"),
+          url: conv.creation.image.image_ori_raw.url,
+          filename: completeSuffix(
+            replaceTemplate(customFilenameTemplate, conv),
+            "png",
+          ).replace(/\//g, "_"),
+          folder: createFolder ? conv.tts_content + "/" : "",
+        }));
+
+      // 构建视频下载列表
+      const videoDownloads: typeof imageDownloads = [];
+      videoResults.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const { conv, videoUrl } = result.value;
+          if (!downloadedUrl.has(videoUrl)) {
+            videoDownloads.push({
+              conversation_id: conv.conversation_id,
+              message_id: conv.message_id,
+              key: conv.creation.image.key.replace(/\//g, "_"),
+              url: videoUrl,
+              filename: completeSuffix(
+                replaceTemplate(customFilenameTemplate, conv),
+                "mp4",
+              ).replace(/\//g, "_"),
+              folder: createFolder ? conv.tts_content + "/" : "",
+            });
+          }
+        }
+      });
+
+      // 统计获取失败的视频数量
+      const failedVideoCount = videoResults.filter(
+        (r) => r.status === "rejected",
+      ).length;
+      if (failedVideoCount > 0) {
+        Toast.warning(`${failedVideoCount} 个视频获取下载地址失败，已跳过`);
+      }
+
+      const downloadImages = [...imageDownloads, ...videoDownloads];
+
       if (downloadImages.length === 0) {
-        Toast.warning(
-          `没有可下载的图片，跳过已下载的图片数量：${convMessages.length - downloadImages.length}`,
-        );
+        Toast.warning("没有可下载的内容");
         return;
       }
       download(downloadImages, {
@@ -156,15 +201,13 @@ function App() {
           Toast.success("下载完成");
           // 批量添加
           db.downloaded.bulkAdd(
-            downloadImages.map((item) => {
-              return {
-                url: item.url,
-              };
-            }),
+            downloadImages.map((item) => ({
+              url: item.url,
+            })),
           );
         },
         onError(url, error) {
-          Toast.error(`下载图片 ${url} 失败: ${error.message}`);
+          Toast.error(`下载失败 ${url}: ${error.message}`);
         },
       });
     },
