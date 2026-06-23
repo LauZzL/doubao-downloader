@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 22.22.3
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
@@ -49,14 +49,14 @@ jobs:
         with:
           name: doubao-downloader-extension
           path: doubao-downloader.zip
-          retention-days: 30
+          retention-days: 1
 
       - name: Upload UserScript
         uses: actions/upload-artifact@v4
         with:
           name: doubao-downloader-userscript
           path: dist/doubao-downloader.user.js
-          retention-days: 30
+          retention-days: 1
 
       - name: Install jq and extract version from package.json
         run: |
