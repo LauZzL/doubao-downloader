@@ -53,6 +53,8 @@ export type ConvFilter = {
   showConvId: string;
   currentPage: number;
   pageSize: number;
+  startTime?: number;
+  endTime?: number;
 };
 
 declare global {

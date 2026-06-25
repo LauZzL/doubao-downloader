@@ -31,10 +31,17 @@ function MainPanel(props: MainPanelProps) {
 
   const selectConv = useCallback((convId: string) => {
     changeConvFilter("showConvId", convId);
+    changeConvFilter("currentPage", 1);
   }, []);
 
   const onChangePage = useCallback((page: number) => {
     changeConvFilter("currentPage", page);
+  }, []);
+
+  const changeTimeRange = useCallback((startTime?: number, endTime?: number) => {
+    changeConvFilter("startTime", startTime);
+    changeConvFilter("endTime", endTime);
+    changeConvFilter("currentPage", 1);
   }, []);
 
   return (
@@ -46,7 +53,7 @@ function MainPanel(props: MainPanelProps) {
         paddingBottom: "20px",
         cursor: "default",
       }}
-      header={<PanelHeader openSetting={openSetting} changeConv={selectConv} onCloseMainPanel={onCloseMainPanel} />}
+      header={<PanelHeader openSetting={openSetting} changeConv={selectConv} changeTimeRange={changeTimeRange} onCloseMainPanel={onCloseMainPanel} />}
       visible={isOpenMainPanel}
       onCancel={handleCancel}
       closeOnEsc={true}

@@ -1,12 +1,13 @@
-import { Card, Space, Button, Select } from "@douyinfe/semi-ui-19";
-import { memo, useContext, useMemo } from "react";
+import { Card, Space, Button, Select, DatePicker } from "@douyinfe/semi-ui-19";
+import { memo, useCallback, useContext, useMemo } from "react";
 import { ConvContext } from "@/context/ConvContext";
 
 interface ActionCardProps {
   changeConv: (convId: string) => void;
+  changeTimeRange: (startTime?: number, endTime?: number) => void;
 }
 
-function ActionCard({ changeConv }: ActionCardProps) {
+function ActionCard({ changeConv, changeTimeRange }: ActionCardProps) {
   const { convMessage, handleDownloadAll, handleDownloadSelected } =
     useContext(ConvContext);
   const convMessageList = useMemo(
@@ -36,6 +37,19 @@ function ActionCard({ changeConv }: ActionCardProps) {
             </Select.Option>
           ))}
         </Select>
+        <DatePicker
+          type="dateRange"
+          placeholder={["开始日期", "结束日期"]}
+          onChange={(date) => {
+            if (date && Array.isArray(date) && date.length === 2) {
+              const [start, end] = date as [Date, Date];
+              changeTimeRange(start.getTime(), end.getTime() + 86400000 - 1);
+            } else {
+              changeTimeRange(undefined, undefined);
+            }
+          }}
+          style={{ width: 240 }}
+        />
         <Space>
           <Button onClick={handleDownloadSelected} type="tertiary">下载选中</Button>
           <Button onClick={handleDownloadAll} type="tertiary">全部下载</Button>

@@ -15,11 +15,17 @@ export function useConvs() {
       (item) => item.creation && ((item.conversation_id === convFilter.showConvId) || convFilter.showConvId === '-1'),
     );
 
-    const convs = convMessageList.filter((item) => item.creation?.image.image_ori_raw.url);
+    const convs = convMessageList
+      .filter((item) => item.creation?.image.image_ori_raw.url)
+      .filter((item) => {
+        if (convFilter.startTime && item.create_time < convFilter.startTime) return false;
+        if (convFilter.endTime && item.create_time > convFilter.endTime) return false;
+        return true;
+      });
 
     const startIndex = (convFilter.currentPage - 1) * convFilter.pageSize;
     const endIndex = startIndex + convFilter.pageSize;
-    
+
     return convs.slice(startIndex, endIndex);
   }, [convMessages, convFilter]);
 }

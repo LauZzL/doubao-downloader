@@ -12,12 +12,14 @@ import { useCheckVersion } from "@/hooks/use-check-version";
 interface PanelHeaderProps {
   onCloseMainPanel: () => void;
   changeConv: (convId: string) => void;
+  changeTimeRange: (startTime?: number, endTime?: number) => void;
   openSetting: () => void;
 }
 
 function PanelHeader({
   onCloseMainPanel,
   changeConv,
+  changeTimeRange,
   openSetting,
 }: PanelHeaderProps) {
   const isMobile = useIsMobile();
@@ -76,7 +78,7 @@ function PanelHeader({
           </Space>
         </div>
       </div>
-      <ActionCard changeConv={changeConv} />
+      <ActionCard changeConv={changeConv} changeTimeRange={changeTimeRange} />
     </div>
   );
 }
