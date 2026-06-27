@@ -1,2 +1,7 @@
 @import "tailwindcss" prefix(dd);
 @import "tw-animate-css";
+
+
+.semi-image-preview-image-img {
+    object-fit: cover;
+}
