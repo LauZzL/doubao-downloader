@@ -3,6 +3,7 @@ import { Button, Card, DatePicker, Radio, RadioGroup, Select, Space } from "@dou
 import { memo, useContext, useMemo } from "react";
 import type { MediaCounts } from "@/utils/media-filter";
 import type { MediaType } from "@/types";
+import VideoRecovery from "./VideoRecovery";
 
 interface ActionCardProps {
   changeConv: (convId: string) => void;
@@ -74,6 +75,7 @@ function ActionCard({
         <Space>
           <Button onClick={handleDownloadSelected} type="tertiary">下载选中</Button>
           <Button onClick={handleDownloadAll} type="tertiary">全部下载</Button>
+          <VideoRecovery />
         </Space>
       </div>
     </Card>

@@ -4,6 +4,8 @@ import type { ConvMessage } from "@/types";
 import { ConvContext } from "@/context/ConvContext";
 import ActionCard from "./ActionCard";
 
+vi.mock("./VideoRecovery", () => ({ default: () => <button>按作品ID下载视频</button> }));
+
 vi.mock("@douyinfe/semi-ui-19", () => ({
   Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button onClick={onClick} type="button">{children}</button>
@@ -49,6 +51,7 @@ describe("ActionCard", () => {
         handleSelect: vi.fn(),
         handleDownload: vi.fn(),
         handlePlay: vi.fn(),
+        handleDelete: vi.fn(),
         handleDownloadAll: vi.fn(),
         handleDownloadSelected: vi.fn(),
       }}>
