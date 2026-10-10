@@ -4,8 +4,6 @@ import type { ConvMessage } from "@/types";
 import { ConvContext } from "@/context/ConvContext";
 import ActionCard from "./ActionCard";
 
-vi.mock("./VideoRecovery", () => ({ default: () => <button>按作品ID下载视频</button> }));
-
 vi.mock("@douyinfe/semi-ui-19", () => ({
   Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button onClick={onClick} type="button">{children}</button>
@@ -66,6 +64,7 @@ describe("ActionCard", () => {
     );
 
     expect(screen.getByText("全部 3")).toBeTruthy();
+    expect(screen.getByText("我的创作")).toBeTruthy();
     expect(screen.getByText("图片 2")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "视频 1" }));
     expect(changeMediaType).toHaveBeenCalledWith("video");
