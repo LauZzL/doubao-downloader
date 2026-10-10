@@ -127,6 +127,41 @@ function extractTtsContentText(tts_content: string) {
   }
 }
 
+function extractRichMediaVideos(message: any): ConvMessage[] {
+  return (message?.content_block || []).flatMap((block: any) => {
+    if (Number(block?.block_type) !== 10084) return [];
+
+    return (block?.content?.rich_media_layout_block?.media || []).flatMap(
+      (media: any) => {
+        const video = media?.creation?.video;
+        const vid = video?.vid;
+        if (!vid) return [];
+
+        return [
+          {
+            source: "conversation",
+            index_in_conv: Number(message.index_in_conv || 0),
+            bot_reply_message_id: String(message.bot_reply_message_id || ""),
+            tts_content: extractTtsContentText(String(message.tts_content || "")),
+            conversation_id: String(message.conversation_id || ""),
+            message_id: String(message.message_id || ""),
+            create_time: Number(message.create_time || 0) * 1000,
+            creation: {
+              creation_type: "video",
+              vid: String(vid),
+              image: {
+                key: String(video.cover?.key || vid),
+                image_ori_raw: { url: String(video.cover?.image_thumb?.url || "") },
+                gen_params: "",
+              },
+            },
+          },
+        ];
+      },
+    );
+  });
+}
+
 export function extractAispaceCreations(children: unknown[]): ConvMessage[] {
   return children.flatMap((child: any) => {
     if (!child || (child.node_type !== 4 && child.node_type !== 6)) return [];
@@ -200,7 +235,11 @@ export function useJson({
       let jsonData = _parse(text);
       const aispaceChildren = jsonData?.data?.children;
       const isAispace = isAispaceResponse(jsonData);
-      if (!text.includes("creations") && !isAispace) return jsonData;
+      if (
+        !text.includes("creations") &&
+        !text.includes("rich_media_layout_block") &&
+        !isAispace
+      ) return jsonData;
       let messageList = findAllKeysInJson(jsonData, "messages");
       const newConv: ConvMessage[] = [];
       if (isAispace) {
@@ -248,7 +287,10 @@ export function useJson({
                   showRaw,
                 });
                 newConv.push(...extracted);
-              } else {
+              }
+              const richMediaVideos = extractRichMediaVideos(message);
+              newConv.push(...richMediaVideos);
+              if (creationList.length === 0 && richMediaVideos.length === 0) {
                 newConv.push(baseInfo as ConvMessage);
               }
             } else {
