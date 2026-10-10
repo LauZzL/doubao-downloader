@@ -63,11 +63,11 @@ export async function getVideoUrl(vid: string | number) {
   const creationId = await getHomePage();
   const node_id = await getNodeId(creationId, vid);
 
-  return getVideoUrlByNodeId(node_id);
+  return getSourceUrlByNodeId(node_id);
 }
 
 /** Resolve an existing creation node without needing its conversation or vid. */
-export async function getVideoUrlByNodeId(nodeId: string | number) {
+export async function getSourceUrlByNodeId(nodeId: string | number) {
   const node_id = typeof nodeId === "string" ? nodeId.trim() : nodeId;
   if (!node_id) throw new Error("请输入作品 nodeId");
 

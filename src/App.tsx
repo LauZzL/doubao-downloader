@@ -17,7 +17,9 @@ import { getVideoUrl } from "@/api/video";
 import { matchesShortcut } from "@/utils/shortcut";
 import { filterConvsByMediaType } from "@/utils/media-filter";
 import { filterDeletedConvs } from "@/utils/deleted-media";
+import { getSourceDownloadUrl } from "@/utils/video-url";
 import { useDeletedMediaKeys } from "@/hooks/use-deleted-media-keys";
+import { matchesConvScope } from "@/utils/conv-filter";
 
 function settingValue<T>(settings: Setting[], key: SettingKey, fallback: T): T {
   return (settings.find((item) => item.key === key)?.value as T | undefined) ?? fallback;
@@ -125,7 +127,9 @@ function App() {
         const newConv = convMessages.filter(
           (message) =>
             !prev.some(
-              (existing) => existing.message_id === message.message_id,
+              (existing) =>
+                existing.message_id === message.message_id &&
+                existing.source === message.source,
             ),
         );
         if (newConv.length === 0) return prev;
@@ -224,21 +228,31 @@ function App() {
       // 解析视频真实下载地址
       const videoResults = await Promise.allSettled(
         videoConvs.map(async (conv) => {
-          const videoUrl = await getVideoUrl(conv.creation.vid!);
+          const videoUrl = await getSourceDownloadUrl(conv);
           return { conv, videoUrl };
         }),
       );
 
-      // 构建图片下载列表
-      const imageDownloads = imageConvs
+      // 构建图片下载列表。aispace 图片需要先通过 node_id 获取源文件地址。
+      const imageResults = await Promise.allSettled(
+        imageConvs.map(async (conv) => ({
+          conv,
+          imageUrl: await getSourceDownloadUrl(conv),
+        })),
+      );
+      const imageDownloads = imageResults
         .filter(
-          (conv) => !downloadedUrl.has(conv.creation.image.image_ori_raw.url),
+          (result): result is PromiseFulfilledResult<{
+            conv: ConvMessage & { creation: Creation };
+            imageUrl: string;
+          }> => result.status === "fulfilled",
         )
-        .map((conv) => ({
+        .filter(({ value }) => !downloadedUrl.has(value.imageUrl))
+        .map(({ value: { conv, imageUrl } }) => ({
           conversation_id: conv.conversation_id,
           message_id: conv.message_id,
           key: conv.creation.image.key.replace(/\//g, "_"),
-          url: conv.creation.image.image_ori_raw.url,
+          url: imageUrl,
           filename: withDisplayOrder(
             completeSuffix(
               replaceTemplate(customFilenameTemplate, conv),
@@ -277,8 +291,11 @@ function App() {
       const failedVideoCount = videoResults.filter(
         (r) => r.status === "rejected",
       ).length;
-      if (failedVideoCount > 0) {
-        Toast.warning(`${failedVideoCount} 个视频获取下载地址失败，已跳过`);
+      const failedImageCount = imageResults.filter(
+        (r) => r.status === "rejected",
+      ).length;
+      if (failedVideoCount + failedImageCount > 0) {
+        Toast.warning(`${failedVideoCount + failedImageCount} 个媒体获取下载地址失败，已跳过`);
       }
 
       const downloadImages = [...imageDownloads, ...videoDownloads];
@@ -333,7 +350,7 @@ function App() {
   const handleDownloadAll = useCallback(() => {
     const selectConv = convFilter.showConvId;
     const scopedConvs = convMessageList.filter((conv) => {
-      if (!conv.creation || (selectConv !== "-1" && conv.conversation_id !== selectConv)) return false;
+      if (!conv.creation || !matchesConvScope(conv, selectConv)) return false;
       if (convFilter.startTime && conv.create_time < convFilter.startTime) return false;
       if (convFilter.endTime && conv.create_time > convFilter.endTime) return false;
       return true;
