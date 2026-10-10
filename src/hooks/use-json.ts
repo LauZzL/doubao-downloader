@@ -127,6 +127,52 @@ function extractTtsContentText(tts_content: string) {
   }
 }
 
+export function extractAispaceCreations(children: unknown[]): ConvMessage[] {
+  return children.flatMap((child: any) => {
+    if (!child || (child.node_type !== 4 && child.node_type !== 6)) return [];
+
+    const coverUrl =
+      child.node_cover?.list_view?.cover_url ||
+      child.node_cover?.thumbnail_view?.cover_url ||
+      "";
+    const messageId = String(
+      child.content?.message_id_str || child.content?.message_id || child.id,
+    );
+    const baseInfo: ConvMessage = {
+      source: "aispace",
+      index_in_conv: 0,
+      bot_reply_message_id: String(child.id),
+      tts_content: child.name || "",
+      conversation_id: String(child.conversation_id || ""),
+      message_id: messageId,
+      create_time: Number(child.create_time || 0) * 1000,
+      creation: {
+        creation_type: child.node_type === 6 ? "video" : "image",
+        node_id: String(child.id),
+        image: {
+          key: String(child.key || child.id),
+          image_ori_raw: { url: coverUrl },
+          gen_params: "",
+        },
+      },
+    };
+
+    if (child.node_type === 6) baseInfo.creation.vid = String(child.key || "");
+    return [baseInfo];
+  });
+}
+
+export function isAispaceResponse(data: any): boolean {
+  const responseData = data?.data;
+  return Boolean(
+    Array.isArray(responseData?.children) &&
+    Array.isArray(responseData?.path) &&
+    responseData.path.some(
+      (node: any) => node?.content?.directory_type === 5 || node?.name === "我的创作",
+    ),
+  );
+}
+
 export function useJson({
   showRaw = true,
   enable15sVideo = true,
@@ -135,6 +181,7 @@ export function useJson({
   callback,
 }: UseJsonProps) {
   const prevMessageIds = useRef<Set<string>>(new Set());
+  const prevAispaceNodeIds = useRef<Set<string>>(new Set());
   useEffect(() => {
     const _parse = JSON.parse;
     const _stringify = JSON.stringify;
@@ -151,17 +198,27 @@ export function useJson({
     }) as typeof JSON.stringify;
     JSON.parse = function (text: string) {
       let jsonData = _parse(text);
-      if (!text.includes("creations")) return jsonData;
+      const aispaceChildren = jsonData?.data?.children;
+      const isAispace = isAispaceResponse(jsonData);
+      if (!text.includes("creations") && !isAispace) return jsonData;
       let messageList = findAllKeysInJson(jsonData, "messages");
       const newConv: ConvMessage[] = [];
-      if (messageList.length === 0 && jsonData.message_id) {
+      if (isAispace) {
+        const newChildren = aispaceChildren.filter((child: any) => {
+          const nodeId = String(child?.id || "");
+          if (!nodeId || prevAispaceNodeIds.current.has(nodeId)) return false;
+          prevAispaceNodeIds.current.add(nodeId);
+          return true;
+        });
+        newConv.push(...extractAispaceCreations(newChildren));
+      } else if (messageList.length === 0 && jsonData.message_id) {
         // 实时对话
         const message_id = jsonData.message_id;
         let creations = findAllKeysInJson(jsonData, "creations");
         if (creations.length > 0) {
           const extracted = extractCreations({
             creationsArray: creations,
-            baseInfo: { message_id },
+            baseInfo: { message_id, source: "conversation" },
             showRaw,
           });
           newConv.push(...extracted);
@@ -176,6 +233,7 @@ export function useJson({
               prevMessageIds.current.add(message_id);
 
               const baseInfo: Partial<ConvMessage> = {
+                source: "conversation",
                 index_in_conv: Number(message.index_in_conv),
                 bot_reply_message_id: message.bot_reply_message_id,
                 tts_content: extractTtsContentText(message.tts_content),

@@ -4,6 +4,7 @@ import { ConvFilterContext } from "@/context/ConvFilterContext";
 import { filterConvsByMediaType } from "@/utils/media-filter";
 import { filterDeletedConvs } from "@/utils/deleted-media";
 import { useDeletedMediaKeys } from "@/hooks/use-deleted-media-keys";
+import { matchesConvScope } from "@/utils/conv-filter";
 
 export function useCreationPagination() {
   const convMessages = useContext(ConvContext);
@@ -12,7 +13,7 @@ export function useCreationPagination() {
   
   return useMemo(() => {
     const convMessageList = convMessages.convMessage.filter(
-      (item) => item.creation && ((item.conversation_id === convFilter.showConvId) || convFilter.showConvId === '-1'),
+      (item) => item.creation && matchesConvScope(item, convFilter.showConvId),
     );
 
     const convs = convMessageList
