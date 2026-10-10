@@ -3,6 +3,7 @@ import { Button, Card, DatePicker, Radio, RadioGroup, Select, Space } from "@dou
 import { memo, useContext, useMemo } from "react";
 import type { MediaCounts } from "@/utils/media-filter";
 import type { MediaType } from "@/types";
+import { AISPACE_FILTER } from "@/utils/conv-filter";
 
 interface ActionCardProps {
   changeConv: (convId: string) => void;
@@ -22,7 +23,7 @@ function ActionCard({
   const { convMessage, handleDownloadAll, handleDownloadSelected } =
     useContext(ConvContext);
   const convMessageList = useMemo(
-    () => convMessage.filter((item) => item.index_in_conv === 1),
+    () => convMessage.filter((item) => item.source !== "aispace" && item.index_in_conv === 1),
     [convMessage],
   );
   const defaultSelected = "-1";
@@ -37,6 +38,9 @@ function ActionCard({
         >
           <Select.Option className="dd:justify-start!" key="-1" value="-1">
             所有对话
+          </Select.Option>
+          <Select.Option className="dd:justify-start!" key={AISPACE_FILTER} value={AISPACE_FILTER}>
+            我的创作
           </Select.Option>
           {convMessageList.map((item) => (
             <Select.Option

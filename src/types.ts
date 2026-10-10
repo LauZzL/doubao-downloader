@@ -22,11 +22,14 @@ export type Creation = {
     gen_params: string;
   };
   vid?: string;
+  node_id?: string;
 };
 
 export type MediaType = "all" | "image" | "video";
+export type ConvSource = "conversation" | "aispace";
 
 export type ConvMessage = {
+  source?: ConvSource;
   // 索引(1为该对话的第一条消息)
   index_in_conv: number;
   // 回复的消息ID
